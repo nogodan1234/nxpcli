@@ -1,0 +1,224 @@
+#!/usr/bin/env python3
+
+motd = f"""
+{'#'*80}
+#  Script Name : nxpcli
+#  Script Purpose or Overview 
+#  - Ultamate goal of this program is to interact with nutanix Prism Central without UI operation via API
+#  - This program is developed with python3 
+#  - This program can be used for conducting Prism Central operation via API
+#  - This program requires nxapilibpv3.py
+#
+#  This program is developed by Taeho Choi(taeho.choi@nutanix.com) 
+#
+#   Disclaimer
+#   This code is intended as a standalone example.  
+#   Subject to licensing restrictions defined on nutanix.dev, 
+#   this can be downloaded, copied and/or modified in any way you see fit.
+#   Please be aware that all public code samples provided by Nutanix are unofficial in nature, 
+#   are provided as examples only, are unsupported and will need to be heavily scrutinized 
+#   and potentially modified before they can be used in a production environment.  
+#   All such code samples are provided on an as-is basis,and Nutanix expressly disclaims all warranties, express or implied.
+#   All code samples are © Nutanix, Inc., and are provided as-is under the MIT license. 
+#   (https://opensource.org/licenses/MIT)
+{'#'*80}
+"""
+
+import sys
+import requests
+import urllib.request
+import nxapilibv3 as C
+import urllib3
+import pprint
+import time
+from itertools import chain, repeat
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+import json
+
+if __name__ == "__main__":
+    print(motd)
+    cluster = C.GetClusterDetail()
+    while True:
+        cluster_name = cluster[0]    
+        ip = cluster[1]
+        username = cluster[2]
+        password = cluster[3]  
+
+        mycluster = C.my_api(ip,username,password)
+        seLection = mycluster.EntityPCMenu(cluster_name,ip,username)
+
+        if int(seLection) in range(1,11):
+            #dictionary for entity selection
+            select = {"1":"cluster","2":"host","3":"vm","4":"image","5":"project","6":"subnet","7":"directory_service","8":"role","9":"alert","10":"user"} 
+            print("You've selected {} info....\n".format(select[seLection]))            
+            #Listing all entities for the subject with name and uuid
+            status, all_clusters = mycluster.print_all_ent(select[seLection])
+            #Get specify entity uuid for the detail
+            ent_uuid=mycluster.GetUUid()
+            status, cluster_info = mycluster.get_single_ent_info((select[seLection]),ent_uuid)
+            print("Here is the {} detail... \n\n".format(select[seLection]))
+            pprint.pprint(cluster_info)
+
+        elif seLection == str(11):
+            print("You've selected new cluster setup option..\n")           
+            print("1. Please fill in EULA form to accept:...\n")
+            eula={}
+            eula["username"]        = input("please enter username: ")
+            eula["companyName"]     = input("please enter company name: ")
+            eula["jobTitle"]        = input("please enter your job title: ")
+            
+            status,task_uuid = mycluster.post_new_ent("eula",eula)
+            print ("\n\nServer Response code is: {} and task response is {}\n".format(status,task_uuid))
+            
+            print("2. Please fill in pulse option:...\n")
+            pulse={"emailContactList":[],"enable":str,"enableDefaultNutanixEmail":str,"isPulsePromptNeeded":"false"}
+            #pulse["emailContactList"]                       = input("please enter contact email list: ")
+            pulse["enable"]                                 = input("please type pulse enable true or false: ")
+            pulse["enableDefaultNutanixEmail"]              = input("Enable Default NutanixEmail? true or false: ")
+            status,task_uuid = mycluster.post_new_ent("pulse",pulse)
+            print ("\n\nServer Response code is: {} and task response is {}".format(status,task_uuid))
+        
+            print("3. Please share public ssh-key for cluster ssh access:...\n")
+            sshkey={}
+            sshkey["key"]                                   = input("please copy and paste your public-key - single line: ")
+            sshkey["name"]                                  = input("please type your ssh-key name: ")
+            status,task_uuid = mycluster.post_new_ent("pubkey",sshkey)
+            print ("\n\nServer Response code is: {} and task response is {}\n".format(status,task_uuid))
+            
+            print("3. Please type ntp server to set for the cluster :...\n")
+            ntpip={}
+            ntpip["value"]                                   = input("please type ntp ip address: ")
+            status,task_uuid = mycluster.post_new_ent("ntp",ntpip)
+            print ("\n\nServer Response code is: {} and task response is {}\n".format(status,task_uuid))      
+
+            print("4. Please type dns server ip to set for the cluster :...\n")
+            dnsip={}    
+            dnsip["value"]                                   = input("please type dns ip address: ")
+            status,task_uuid = mycluster.post_new_ent("dns",dnsip)
+            print ("\n\nServer Response code is: {} and task response is {}\n".format(status,task_uuid))  
+
+        elif seLection == str(12):
+            print("You've selected Deploy new Karbon cluster with Flannel\n")
+            body = {"name":str,"description":"","vm_network":str,"k8s_config":{"service_cluster_ip_range":"172.19.0.0/16","network_cidr":"172.20.0.0/16","fqdn":"","workers":[{"node_pool_name":"","name":"","uuid":"","resource_config":{"cpu":8,"memory_mib":8192,"image":"fcbb8c82-fdbe-448a-a2b0-f55b8e2ceeaf","disk_mib":122880}},{"node_pool_name":"","name":"","uuid":"","resource_config":{"cpu":8,"memory_mib":8192,"image":"fcbb8c82-fdbe-448a-a2b0-f55b8e2ceeaf","disk_mib":122880}},{"node_pool_name":"","name":"","uuid":"","resource_config":{"cpu":8,"memory_mib":8192,"image":"fcbb8c82-fdbe-448a-a2b0-f55b8e2ceeaf","disk_mib":122880}}],"master_config":{"external_ip":"10.2.123.2","deployment_type":"mm_vrrp"},"masters":[{"node_pool_name":"","name":"","uuid":"","resource_config":{"cpu":4,"memory_mib":4096,"image":"fcbb8c82-fdbe-448a-a2b0-f55b8e2ceeaf","disk_mib":122880}},{"node_pool_name":"","name":"","uuid":"","resource_config":{"cpu":4,"memory_mib":4096,"image":"fcbb8c82-fdbe-448a-a2b0-f55b8e2ceeaf","disk_mib":122880}}],"os_flavor":"centos7.5.1804","network_subnet_len":24,"version":"1.16.10-0"},"cluster_ref":"0005aa72-3d0e-5bff-0000-00000000218e","logging_config":{"enable_app_logging":False},"storage_class_config":{"metadata":{"name":"default-storageclass"},"spec":{"reclaim_policy":"Delete","sc_volumes_spec":{"cluster_ref":"0005aa72-3d0e-5bff-0000-00000000218e","user":"admin","password":"nx2Tech687u0021","storage_container":"default-container-8590","file_system":"ext4","flash_mode":False}}},"etcd_config":{"num_instances":3,"name":"taekarbon","nodes":[{"node_pool_name":"","name":"","uuid":"","resource_config":{"cpu":4,"memory_mib":8192,"image":"fcbb8c82-fdbe-448a-a2b0-f55b8e2ceeaf","disk_mib":40960}}]}}
+            body["name"]                                                        = input("Enter Karbon cluster name: ")
+            body["vm_network"]                                                  = input("Enter Karbon network uuid to deploy: ")
+            karbon_img                                                          = input("Enter Karbon image uuid to use: ")
+            pe_uuid                                                             = input("Enter Prism Element uuid to deploy: ")
+            num_worker                                                          = int(input("Enter number of worker nodes to deply: "))
+            worker_cpu                                                          = int(input("Enter worker node num of cpu - default 8: "))
+            worker_mem                                                          = 1024*int(input("Enter worker node memory size(GB) - default 8: "))
+            worker_disk                                                         = 1024*1024*1024*int(input("Enter worker disk size(GB) - default 120 : "))
+            for i in range(num_worker):
+                body["k8s_config"]["workers"][i]["resource_config"]['cpu']          = worker_cpu
+                body["k8s_config"]["workers"][i]["resource_config"]['memory_mib']   = worker_mem
+                body["k8s_config"]["workers"][i]["resource_config"]['disk_mib']     = worker_disk
+                body["k8s_config"]["workers"][i]["resource_config"]["image"]        = karbon_img
+            
+            body["k8s_config"]["master_config"]["external_ip"]                  = input("Enter master virtual ip address : ")
+            body["k8s_config"]["master_config"]["deployment_type"]              = input("Enter master nodes deployment type(active-standy: mm_vrrp ) : ")
+
+            num_master                                                          = 2
+            master_cpu                                                          = int(input("Enter master node num of cpu - default 4: "))
+            master_mem                                                          = 1024*int(input("Enter master node memory size(GB) - default 4: "))
+            master_disk                                                         = 1024*1024*1024*int(input("Enter master disk size(GB) - default 120 : "))
+
+            for i in range(num_master):
+                body["k8s_config"]["masters"][i]["resource_config"]['cpu']          = master_cpu 
+                body["k8s_config"]["masters"][i]["resource_config"]['memory_mib']   = master_mem 
+                body["k8s_config"]["masters"][i]["resource_config"]['disk_mib']     = master_disk 
+                body["k8s_config"]["masters"][i]["resource_config"]["image"]        = karbon_img
+
+            body["cluster_ref"]                                                     = pe_uuid
+
+            body["storage_class_config"]["metadata"]["name"]                        = input("Enter storage class name ex) default-storageclass ")
+            body["storage_class_config"]["spec"]["reclaim_policy"]                  = input("Enter Reclaim_policy for storage Delete(default) or Retain, Recycle:  ")
+            body["storage_class_config"]["spec"]["sc_volumes_spec"]["cluster_ref"]  = pe_uuid
+            body["storage_class_config"]["spec"]["sc_volumes_spec"]["user"]         = input("Enter username to add Prism Element data service ip to access iscsi volume - default:admin:  ")
+            body["storage_class_config"]["spec"]["sc_volumes_spec"]["password"]     = input("Enter password for the user:  ")
+            body["storage_class_config"]["spec"]["sc_volumes_spec"]["storage_container"]     = input("Enter storage container name to use of the Prism Element cluster -ex) default-container-xxxx ")
+            body["storage_class_config"]["spec"]["sc_volumes_spec"]["file_system"]  = input("Enter filesystem type to use - ext4 or xfs: ")
+            #body["storage_class_config"]["spec"]["sc_volumes_spec"]["flash_mode"]   = input("Do you want to use SSD tier only? True or False(default)")
+
+            body["etcd_config"]["num_instances"]                                    = int(input("Enter number of etcd nodes to deply: "))
+            body["etcd_config"]["name"]                                             = body["name"]
+            body["etcd_config"]["nodes"][0]["resource_config"]["cpu"]               = int(input("Enter etcd node num of cpu - default 4: "))
+            body["etcd_config"]["nodes"][0]["resource_config"]["memory_mib"]        = 1024*int(input("Enter etcd node memory size(GB) - default 8: "))
+            body["etcd_config"]["nodes"][0]["resource_config"]["disk_mib"]          = 1024*1024*1024*int(input("Enter etcd disk size(GB) - default 40 : "))
+
+            status, karbon_task = mycluster.post_new_ent("karbon_fla",body)
+            pprint.pprint(karbon_task) 
+
+        elif seLection == str(13):
+            print("You've selected Deploy new Karbon cluster with Calico\n")
+            body={'cni_config': {'calico_config': {'ip_pool_configs': [{'cidr': '172.20.0.0/16'}]}, 'node_cidr_mask_size': 24, 'pod_ipv4_cidr': '172.20.0.0/16', 'service_ipv4_cidr': '172.19.0.0/16'}, 'etcd_config': {'node_pools': [{'ahv_config': {'cpu': 2, 'disk_mib': 40960, 'memory_mib': 8192, 'network_uuid': 'c61d22f6-e69c-4800-a0e8-484237982efc', 'prism_element_cluster_uuid': '0005aa72-3d0e-5bff-0000-00000000218e'}, 'name': 'etcd-node-pool', 'node_os_version': 'ntnx-0.6', 'num_instances': 3}]}, 'masters_config': {'active_passive_config': {'external_ipv4_address': '10.2.123.29'}, 'node_pools': [{'ahv_config': {'cpu': 2, 'disk_mib': 122880, 'memory_mib': 4096, 'network_uuid': 'c61d22f6-e69c-4800-a0e8-484237982efc', 'prism_element_cluster_uuid': '0005aa72-3d0e-5bff-0000-00000000218e'}, 'name': 'master-node-pool', 'node_os_version': 'ntnx-0.6', 'num_instances': 2}]}, 'metadata': {'api_version': 'v1.0.0'}, 'name': 'api-cluster-test', 'storage_class_config': {'default_storage_class': True, 'name': 'default-storageclass', 'reclaim_policy': 'Delete', 'volumes_config': {'file_system': 'xfs', 'flash_mode': False, 'password': 'nx2Tech687!', 'prism_element_cluster_uuid': '0005aa72-3d0e-5bff-0000-00000000218e', 'storage_container': 'default-container-8590', 'username': 'admin'}}, 'version': '1.16.10-0', 'workers_config': {'node_pools': [{'ahv_config': {'cpu': 4, 'disk_mib': 122880, 'memory_mib': 8192, 'network_uuid': 'c61d22f6-e69c-4800-a0e8-484237982efc', 'prism_element_cluster_uuid': '0005aa72-3d0e-5bff-0000-00000000218e'}, 'name': 'worker-node-pool', 'node_os_version': 'ntnx-0.6', 'num_instances': 3}]}}
+            clu_name                                                                    = input("Enter Karbon cluster name: ")
+
+            #etcd configuration
+            body["etcd_config"]["node_pools"][0]["ahv_config"]["cpu"]                   = int(input("Enter etcd node num of cpu - default 4: "))
+            body["etcd_config"]["node_pools"][0]["ahv_config"]["memory_mib"]            = 1024*int(input("Enter etcd node memory size(GB) - default 8: "))
+            body["etcd_config"]["node_pools"][0]["ahv_config"]["disk_mib"]              = 1024*int(input("Enter etcd node disk size(GB) - default 40: "))
+            body["etcd_config"]["node_pools"][0]["num_instances"]                       = int(input("Enter number of etcd nodes to deply: "))
+            karbon_img                                                                  = input("Enter nutanix image version to use ex)ntnx-0.6: ")
+            body["etcd_config"]["node_pools"][0]["node_os_version"]                     = karbon_img
+            net_uuid                                                                    = input("Enter Karbon network uuid to deploy: ")
+            body["etcd_config"]["node_pools"][0]["ahv_config"]["network_uuid"]          = net_uuid
+            pe_uuid                                                                     = input("Enter Prism Element uuid to deploy: ")
+            body["etcd_config"]["node_pools"][0]["ahv_config"]["prism_element_cluster_uuid"] = pe_uuid
+
+            #master configuration
+            print("### The master deployment will be active standby mode")
+            body["masters_config"]["active_passive_config"]["external_ipv4_address"]    = input("Enter master virtual ip address: ")
+            body["masters_config"]["node_pools"][0]["ahv_config"]["cpu"]                = int(input("Enter master node num of cpu - default 4: "))
+            body["masters_config"]["node_pools"][0]["ahv_config"]["memory_mib"]         = 1024*int(input("Enter master node memory size(GB) - default 8: "))
+            body["masters_config"]["node_pools"][0]["ahv_config"]["disk_mib"]           = 1024*int(input("Enter master node disk size(GB) - default 120: "))
+            body["masters_config"]["node_pools"][0]["ahv_config"]["network_uuid"]       = net_uuid
+            body["masters_config"]["node_pools"][0]["ahv_config"]["prism_element_cluster_uuid"] = pe_uuid
+            body["masters_config"]["node_pools"][0]["num_instances"]                    = 2
+            body["masters_config"]["node_pools"][0]["node_os_version"]                  = karbon_img
+        
+            #Cluster name
+            body["name"]                                                                = clu_name
+            body["storage_class_config"]["name"]                        	            = input("Enter storage class name ex)default-storageclass : ")
+            body["storage_class_config"]["reclaim_policy"]                              = input("Enter Reclaim_policy for storage Delete(default) or Retain, Recycle:  ")
+            body["storage_class_config"]["volumes_config"]["username"]                  = input("Enter username to add Prism Element data service ip to access iscsi volume - default:admin :  ")
+            body["storage_class_config"]["volumes_config"]["password"]     	            = input("Enter password for the user:  ")
+            body["storage_class_config"]["volumes_config"]["storage_container"]         = input("Enter storage container name to use of the Prism Element cluster ex) default-container-xxxx :  ")
+            body["storage_class_config"]["volumes_config"]["file_system"]  	            = input("Enter filesystem type to use - ext4 or xfs(default): ")
+            #body["storage_class_config"]["volumes_config"]["flash_mode"]   	= input("Do you want to use SSD tier only? true or false(default):")
+            body["storage_class_config"]["volumes_config"]["prism_element_cluster_uuid"] = pe_uuid
+            body["version"]                                                             = input("Enter k8s kernel version want to use - 1.16.10-0: ")
+
+            #Worker configuration
+            body["workers_config"]["node_pools"][0]["ahv_config"]["cpu"]                = int(input("Enter worker node num of cpu - default 4: "))
+            body["workers_config"]["node_pools"][0]["ahv_config"]["memory_mib"]         = 1024*int(input("Enter worker node memory size(GB) - default 8: "))
+            body["workers_config"]["node_pools"][0]["ahv_config"]["disk_mib"]           = 1024*int(input("Enter worker node disk size(GB) - default 120: "))
+            body["workers_config"]["node_pools"][0]["ahv_config"]["network_uuid"]       = net_uuid
+            body["workers_config"]["node_pools"][0]["ahv_config"]["prism_element_cluster_uuid"] = pe_uuid
+            body["workers_config"]["node_pools"][0]["num_instances"]                    = int(input("Enter how many worker nodes you want to install - default 3: "))
+            body["workers_config"]["node_pools"][0]["node_os_version"]                  = karbon_img
+            body["workers_config"]["node_pools"][0]["name"]                             = input("Enter worker pool name you want to use ex)worker-node-pool: ")
+
+            print(body)
+            status, karbon_task = mycluster.post_new_ent("karbon_cal",body)
+            pprint.pprint(karbon_task) 
+
+        elif seLection == str(14):
+            print("You've selected list Karbon cluster\n")
+            status, all_clusters = mycluster.karbon_list()
+
+            #ent_uuid=mycluster.GetUUid()
+            #status, cluster_info = mycluster.get_single_ent_info("host",ent_uuid)
+            #print("Here is the host detail... \n\n")
+            pprint.pprint(all_clusters)
+
+        elif seLection == str(15):
+            print("You've selected delete Karbon cluster\n")
+            ent_uuid=mycluster.GetUUid()
+            status, all_clusters = mycluster.del_single_ent("karbon",ent_uuid)
+            pprint.pprint(all_clusters)
+       
+        elif seLection == "q":
+             break
+
+        else :
+            print("You've selected wrong option")

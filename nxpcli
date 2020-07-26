@@ -47,7 +47,10 @@ if __name__ == "__main__":
         mycluster = C.my_api(ip,username,password)
         seLection = mycluster.EntityPCMenu(cluster_name,ip,username)
 
-        if int(seLection) in range(1,11):
+        if seLection == "q":
+             break
+
+        elif int(seLection) in range(1,11):
             #dictionary for entity selection
             select = {"1":"cluster","2":"host","3":"vm","4":"image","5":"project","6":"subnet","7":"directory_service","8":"role","9":"alert","10":"user"} 
             print("You've selected {} info....\n".format(select[seLection]))            
@@ -215,10 +218,7 @@ if __name__ == "__main__":
             print("You've selected delete Karbon cluster\n")
             ent_uuid=mycluster.GetUUid()
             status, all_clusters = mycluster.del_single_ent("karbon",ent_uuid)
-            pprint.pprint(all_clusters)
-       
-        elif seLection == "q":
-             break
+            pprint.pprint(all_clusters)    
 
         else :
             print("You've selected wrong option")

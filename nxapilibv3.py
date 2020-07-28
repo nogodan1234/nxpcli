@@ -37,6 +37,10 @@ class my_api():
         base_urlkb = 'https://%s:9440/karbon/'
         self.base_urlkb = base_urlkb % self.ip_addr
 
+        # Base URL at which v1 REST services are hosted in Prism Central.
+        base_urlv1 = 'https://%s:9440/PrismGateway/services/rest/v1/'
+        self.base_urlv1 = base_urlv1 % self.ip_addr
+
         self.session = self.get_server_session(self.username, self.password)    
 
     def get_server_session(self, username, password):
@@ -102,12 +106,25 @@ class my_api():
         elif (ent =='karbon_fla'):
             cluster_url = self.base_urlkb + "acs/k8s/cluster"
         elif (ent =='karbon_cal'):
-            cluster_url = self.base_urlkb + "v1/k8s/clusters"           
+            cluster_url = self.base_urlkb + "v1/k8s/clusters" 
+        elif (ent =='eula'):
+            cluster_url = self.base_urlv1 + "eulas/accept"  
+        elif (ent =='pulse'):
+            cluster_url = self.base_urlv1 + "pulse" 
+        elif (ent =='pubkey'):
+            cluster_url = self.base_urlv1 + "cluster/public_keys" 
+        elif (ent =='ntp'):
+            cluster_url = self.base_urlv1 + "cluster/ntp_servers/add_list"   
+        elif (ent =='dns'):
+            cluster_url = self.base_urlv1 + "cluster/name_servers/add_list"            
         else:
             print("Wrong selection")
         print("API end point is {}".format(cluster_url))
         print("\n")
-        server_response = self.session.post(cluster_url,data = json.dumps(body))         
+        if ent == 'pulse':
+            server_response = self.session.put(cluster_url,data = json.dumps(body)) 
+        else:
+            server_response = self.session.post(cluster_url,data = json.dumps(body))         
         return server_response.status_code ,json.loads(server_response.text)
     
     def karbon_list(self):
@@ -160,7 +177,7 @@ class my_api():
                 except KeyError:
                     cluster_uuid = "NA"
             if ent == "alert":
-                print("{}.{}_UUID:{}   Sev:{}   Last_updated_time:{}  TITLE:{} ".format(str(i),ent.upper(),n["metadata"]["uuid"],n["status"]["resources"]["severity"],n["status"]["resources"]["last_update_time"],n["status"]["resources"]["title"]))
+                print("{}.{}_UUID:{}   Sev:{}   Last_updated_time:{}  TITLE:{} ".format(str(i),ent.upper(),n["metadata"]["uuid"],n["status"]["resources"]["severity"].ljust(8),n["status"]["resources"]["last_update_time"],n["status"]["resources"]["title"]))
             else:                 
                 print( "{}.{}_NAME: {} {}_UUID: {}    Hosted_cluster_uuid: {}".format(str(i),ent.upper(),str(n["status"].get("name")).ljust(maxfield),ent,n["metadata"]["uuid"],cluster_uuid))
         if maxfield == 0:

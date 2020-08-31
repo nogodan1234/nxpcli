@@ -148,45 +148,38 @@ class my_api():
     def print_all_ent(self,ent):       
         body = {"kind": ent,"length": 1000, "offset":0}         
         status,entlist = self.post_new_ent(ent,body)
-        try:
-            if entlist['state'] == "ERROR":
-                print("Hmm something went wrong.. Please check this return msg: {}".format(entlist['message_list']))
-                sys.exit()
-        except:
-            entName=[str(i["status"].get("name")) for i in entlist["entities"]]
+        
+        entName=[str(i["status"].get("name")) for i in entlist["entities"]]
+        
+        if len(entName) >= 1:
+            maxfield = len(max(entName,key=len))
+        else:
+            maxfield = 0
+        
+        # Removing PC cluster info
+        if ent == "cluster":
+            entlist["entities"] = [i for i in entlist["entities"] if i["status"]["name"] != "Unnamed"]
+        # Removing PC cluster node info
+        elif ent == "host":
+            entlist["entities"] = [i for i in entlist["entities"] if i["status"].get("name") is not None]
+        # Sorting the list with entity name for better display
+        entlist["entities"] = sorted(entlist["entities"], key=lambda a:str(a["status"].get("name")))
             
-            if len(entName) >= 1:
-                maxfield = len(max(entName,key=len))
-            else:
-                maxfield = 0
-            
-            # Removing PC cluster info
-            if ent == "cluster":
-                entlist["entities"] = [i for i in entlist["entities"] if i["status"]["name"] != "Unnamed"]
-            # Removing PC cluster node info
-            elif ent == "host":
-                entlist["entities"] = [i for i in entlist["entities"] if i["status"].get("name") is not None]
-            # Sorting the list with entity name for better display
-            entlist["entities"] = sorted(entlist["entities"], key=lambda a:str(a["status"].get("name")))
-                
-            for i,n in enumerate(entlist["entities"],1):
-                if ent == "image":
-                    cluster_uuid = str(n["status"]["resources"]["current_cluster_reference_list"][0].get("uuid"))
-                else:
-                    try:
-                        cluster_uuid = str(n["status"]["cluster_reference"].get("uuid"))
-                    except KeyError:
-                        cluster_uuid = "NA"
-                if ent == "alert":
-                    print("{}.{}_UUID:{}   Sev:{}   Last_updated_time:{}  TITLE:{} ".format(str(i),ent.upper(),n["metadata"]["uuid"],n["status"]["resources"]["severity"].ljust(8),n["status"]["resources"]["last_update_time"],n["status"]["resources"]["title"]))
-                else:                 
-                    print( "{}.{}_NAME: {} {}_UUID: {}    Hosted_cluster_uuid: {}".format(str(i),ent.upper(),str(n["status"].get("name")).ljust(maxfield),ent,n["metadata"]["uuid"],cluster_uuid))
-            if maxfield == 0:
-                i = 0
-            print("\nTotal {} number is {}".format(ent,i))
-            # 3. Creating valid UUid list to validate user input
-            UUid=[i["metadata"]["uuid"] for i in entlist["entities"]]
-            return status,UUid
+        for i,n in enumerate(entlist["entities"],1):
+            try:
+                cluster_uuid = str(n["status"]["cluster_reference"].get("uuid"))
+            except KeyError:
+                cluster_uuid = "NA"
+            if ent == "alert":
+                print("{}.{}_UUID:{}   Sev:{}   Last_updated_time:{}  TITLE:{} ".format(str(i),ent.upper(),n["metadata"]["uuid"],n["status"]["resources"]["severity"].ljust(8),n["status"]["resources"]["last_update_time"],n["status"]["resources"]["title"]))
+            else:                 
+                print( "{}.{}_NAME: {} {}_UUID: {}    Hosted_cluster_uuid: {}".format(str(i),ent.upper(),str(n["status"].get("name")).ljust(maxfield),ent,n["metadata"]["uuid"],cluster_uuid))
+        if maxfield == 0:
+            i = 0
+        print("\nTotal {} number is {}".format(ent,i))
+        # 3. Creating valid UUid list to validate user input
+        UUid=[i["metadata"]["uuid"] for i in entlist["entities"]]
+        return status,UUid
 
     def EntityPCMenu(self,clustername,ip,username):
         print('#'*80)

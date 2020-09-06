@@ -162,7 +162,7 @@ if __name__ == "__main__":
             body["etcd_config"]["node_pools"][0]["ahv_config"]["memory_mib"]            = 1024*int(input("Enter etcd node memory size(GB) - default 8: "))
             body["etcd_config"]["node_pools"][0]["ahv_config"]["disk_mib"]              = 1024*int(input("Enter etcd node disk size(GB) - default 40: "))
             body["etcd_config"]["node_pools"][0]["num_instances"]                       = int(input("Enter number of etcd nodes to deply: "))
-            karbon_img                                                                  = input("Enter nutanix image version to use ex)ntnx-0.6: ")
+            karbon_img                                                                  = input("Enter nutanix image version to use ex)ntnx-0.7: ")
             body["etcd_config"]["node_pools"][0]["node_os_version"]                     = karbon_img
             net_uuid                                                                    = input("Enter Karbon network uuid to deploy: ")
             body["etcd_config"]["node_pools"][0]["ahv_config"]["network_uuid"]          = net_uuid
@@ -190,7 +190,7 @@ if __name__ == "__main__":
             body["storage_class_config"]["volumes_config"]["file_system"]  	            = input("Enter filesystem type to use - ext4 or xfs(default): ")
             #body["storage_class_config"]["volumes_config"]["flash_mode"]   	= input("Do you want to use SSD tier only? true or false(default):")
             body["storage_class_config"]["volumes_config"]["prism_element_cluster_uuid"] = pe_uuid
-            body["version"]                                                             = input("Enter k8s kernel version want to use - 1.16.10-0: ")
+            body["version"]                                                             = input("Enter k8s kernel version want to use - 1.16.13-0: ")
 
             #Worker configuration
             body["workers_config"]["node_pools"][0]["ahv_config"]["cpu"]                = int(input("Enter worker node num of cpu - default 4: "))

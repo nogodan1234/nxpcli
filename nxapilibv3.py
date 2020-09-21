@@ -116,12 +116,14 @@ class my_api():
         elif (ent =='ntp'):
             cluster_url = self.base_urlv1 + "cluster/ntp_servers/add_list"   
         elif (ent =='dns'):
-            cluster_url = self.base_urlv1 + "cluster/name_servers/add_list"            
+            cluster_url = self.base_urlv1 + "cluster/name_servers/add_list"
+        elif (ent == 'storage_auth') :
+            cluster_url = self.base_urlkb + "v1-alpha.1/k8s/clusters/storage-auth"           
         else:
             print("Wrong selection")
         print("API end point is {}".format(cluster_url))
         print("\n")
-        if ent == 'pulse':
+        if ent in ["pulse","storage_auth"]:
             server_response = self.session.put(cluster_url,data = json.dumps(body)) 
         else:
             server_response = self.session.post(cluster_url,data = json.dumps(body))       
@@ -134,9 +136,9 @@ class my_api():
         server_response = self.session.get(cluster_url)    
         return server_response.status_code ,json.loads(server_response.text)
 
-    def del_single_ent(self,ent,uuid):
+    def del_single_ent(self,ent,cluster_name):
         if (ent == 'karbon'):
-            cluster_url = self.base_urlkb + "acs/k8s/cluster/"+uuid    
+            cluster_url = self.base_urlkb + "v1/k8s/clusters/"+cluster_name    
         else:
             print("Wrong selection")
         print("API end point is {}".format(cluster_url))
@@ -200,7 +202,8 @@ class my_api():
         print("Type 12: Deploy Karbon Cluster(Not Working) - Flannel")
         print("Type 13: Deploy Karbon Cluster - Calico")
         print("Type 14: List Karbon Cluster ")
-        print("Type 15: Delete Karbon Cluster(Not Working) ")
+        print("Type 15: Delete Karbon Cluster ")
+        #print("Type 16: Update Karbon docker volume plugin password ")
         print("Type q: Exit program \n")
         print('#'*80)
         seLection = input()

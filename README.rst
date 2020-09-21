@@ -48,7 +48,7 @@ Usage
     Type 12: Deploy Karbon Cluster(Not Working) - Flannel
     Type 13: Deploy Karbon Cluster - Calico
     Type 14: List Karbon Cluster
-    Type 15: Delete Karbon Cluster(Not Working)
+    Type 15: Delete Karbon Cluster
     Type q: Exit program
 
 .. code-block:: bash

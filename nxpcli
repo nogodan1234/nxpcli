@@ -217,9 +217,18 @@ if __name__ == "__main__":
 
         elif seLection == str(15):
             print("You've selected delete Karbon cluster\n")
-            ent_uuid=mycluster.GetUUid()
-            status, all_clusters = mycluster.del_single_ent("karbon",ent_uuid)
+            cluster_name                                                      = input("What is the Karbon cluster name you want to delete?: ")
+            status, all_clusters = mycluster.del_single_ent("karbon",cluster_name)
             pprint.pprint(all_clusters)    
 
+        elif seLection == str(16):
+            print("You've selected to update docker volume plugin password\n")
+            body = {"password": str,"prism_element_cluster_uuid":str,"username":str}
+            body["username"]                                                  = input("Enter username for docker volume plugin ex)admin: ")
+            body["password"]                                                  = input("Enter passowrd for above user : ")
+            body["prism_element_cluster_uuid"]                                = input("Enter Prism Element uuid to connect : ")
+            print(body)
+            status, karbon_task = mycluster.post_new_ent("storage_auth",body)
+            
         else :
             print("You've selected wrong option")

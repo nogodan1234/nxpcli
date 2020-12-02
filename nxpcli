@@ -4,7 +4,7 @@ motd = f"""
 {'#'*80}
 #  Script Name : nxpcli
 #  Script Purpose or Overview 
-#  - Ultamate goal of this program is to interact with nutanix Prism Central without UI operation via API
+#  - Ultimate goal of this program is to interact with nutanix Prism Central without UI operation via API
 #  - This program is developed with python3 
 #  - This program can be used for conducting Prism Central operation via API
 #  - This program requires nxapilibpv3.py
@@ -219,16 +219,30 @@ if __name__ == "__main__":
             print("You've selected delete Karbon cluster\n")
             cluster_name                                                      = input("What is the Karbon cluster name you want to delete?: ")
             status, all_clusters = mycluster.del_single_ent("karbon",cluster_name)
-            pprint.pprint(all_clusters)    
-
+            pprint.pprint(all_clusters) 
+            
         elif seLection == str(16):
-            print("You've selected to update docker volume plugin password\n")
-            body = {"password": str,"prism_element_cluster_uuid":str,"username":str}
-            body["username"]                                                  = input("Enter username for docker volume plugin ex)admin: ")
-            body["password"]                                                  = input("Enter passowrd for above user : ")
-            body["prism_element_cluster_uuid"]                                = input("Enter Prism Element uuid to connect : ")
-            print(body)
-            status, karbon_task = mycluster.post_new_ent("storage_auth",body)
+            print("You've selected change admin password \n")
+            body = {"oldPassword":str,"newPassword":str}
+            body["oldPassword"]                                     = input("please type current admin password: ")
+            body["newPassword"]                                     = input("please type new admin password: ")
+
+            status,task_uuid = mycluster.post_new_ent("passwd",body)
+            print ("\n\nServer Response code is: {} and task response is {}\n".format(status,task_uuid))
+            if status == 200:
+                #update passwd on current config file
+                mycluster.NewPasswd(body["newPassword"])
+                #mycluster = C.my_api(ip,username,body["newPassword"])
+                #seLection = mycluster.EntityPCMenu(cluster_name,ip,username)
+    
+        # elif seLection == str(16):
+        #     print("You've selected to update docker volume plugin password\n")
+        #     body = {"password": str,"prism_element_cluster_uuid":str,"username":str}
+        #     body["username"]                                                  = input("Enter username for docker volume plugin ex)admin: ")
+        #     body["password"]                                                  = input("Enter passowrd for above user : ")
+        #     body["prism_element_cluster_uuid"]                                = input("Enter Prism Element uuid to connect : ")
+        #     print(body)
+        #     status, karbon_task = mycluster.post_new_ent("storage_auth",body)
             
         else :
             print("You've selected wrong option")

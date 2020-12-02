@@ -118,12 +118,14 @@ class my_api():
         elif (ent =='dns'):
             cluster_url = self.base_urlv1 + "cluster/name_servers/add_list"
         elif (ent == 'storage_auth') :
-            cluster_url = self.base_urlkb + "v1-alpha.1/k8s/clusters/storage-auth"           
+            cluster_url = self.base_urlkb + "v1-alpha.1/k8s/clusters/storage-auth"
+        elif (ent == "passwd"):
+            cluster_url = self.base_urlv1 + "users/change_password"         
         else:
             print("Wrong selection")
         print("API end point is {}".format(cluster_url))
         print("\n")
-        if ent in ["pulse","storage_auth"]:
+        if ent in ["pulse","storage_auth","passwd"]:
             server_response = self.session.put(cluster_url,data = json.dumps(body)) 
         else:
             server_response = self.session.post(cluster_url,data = json.dumps(body))       
@@ -203,6 +205,7 @@ class my_api():
         print("Type 13: Deploy Karbon Cluster - Calico")
         print("Type 14: List Karbon Cluster ")
         print("Type 15: Delete Karbon Cluster ")
+        print("Type 16: Change admin user password")
         #print("Type 16: Update Karbon docker volume plugin password ")
         print("Type q: Exit program \n")
         print('#'*80)
@@ -217,6 +220,23 @@ class my_api():
         else:
             print("You typed uuid: %s" %uuid)
             return uuid
+
+    def NewPasswd(self,rawpass):
+        home = str(Path.home())
+        cluster_config = home+"/.nx/pcconfig"
+        #Encoding passwd 
+        benc_passwd                 =       base64.b64encode(rawpass.encode("utf-8"))
+        #Convert byte format to string to send json
+        newpass                     =       benc_passwd.decode("utf-8")
+        #load config file from existing one
+        with open(cluster_config,'r') as old_file:
+            config = json.load(old_file)
+        #update passwd
+        config["password"] = newpass 
+        #write passwd to config  
+        with open(cluster_config,'w') as new_file:
+            json.dump(config, new_file)
+        return print("\n %s passwd has been updated !!\n" %config["cluster_name"])
  
 # ========== DO NOT CHANGE ANYTHING ABOVE THIS LINE =====
     

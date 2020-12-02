@@ -230,10 +230,10 @@ if __name__ == "__main__":
             status,task_uuid = mycluster.post_new_ent("passwd",body)
             print ("\n\nServer Response code is: {} and task response is {}\n".format(status,task_uuid))
             if status == 200:
+                #update current in-use passwd
+                mycluster = C.my_api(ip,username,body["newPassword"])
                 #update passwd on current config file
-                mycluster.NewPasswd(body["newPassword"])
-                #mycluster = C.my_api(ip,username,body["newPassword"])
-                #seLection = mycluster.EntityPCMenu(cluster_name,ip,username)
+                mycluster.NewPasswd(body["newPassword"])  
     
         # elif seLection == str(16):
         #     print("You've selected to update docker volume plugin password\n")
